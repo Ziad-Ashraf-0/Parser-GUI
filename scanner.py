@@ -1,5 +1,7 @@
-reservedwords = ['if','then','else','end','repeat','until','read','write']
-specialsymbols = [':=','+','-','*','/','=','<', '(',')',';']
+reservedWords = ['if','then','else','end','repeat','until','read','write']
+specialSymbols = [':=','+','-','*','/','=','<', '(',')',';']
+iterator = 0
+
 class token:
     tokenvalue=""
     tokentype=""
@@ -41,80 +43,139 @@ class token:
             return True
         else:
             return False
+            
 def scanner(given_lines):
+    global iterator
     lines = [s.rstrip() for s in given_lines]
     lines = [s.lstrip() for s in lines]
     lines = [s.strip() for s in lines]
-    outputs = []
-    currentstate='start'
-    currenttoken=""
-    for line in lines:
-        for char in (line+' '):
-            if(char.isalnum)or (char in reservedwords):
-                if(currentstate=='start'):
-                    if(char=='{'):
-                        currentstate='Incomment'
-                    elif(char==':'):
-                         currentstate='inassign'
-                         currenttoken+=(char)
-                    elif((char.isdigit())or (char=='-')):
-                         currentstate='Innum'
-                         currenttoken+=(char)
-                    elif(char.isalpha()):
-                         currentstate='Inid'
-                         currenttoken+=(char)
-                    elif(char in specialsymbols):
-                        currentstate='start'
-                        mytoken = token(char,"special symbols")
-                        outputs.append(mytoken)
-                elif(currentstate=='Incomment'):
-                    if(char=='}'):
-                        currentstate='start'
-                elif(currentstate=='inassign'):
-                    if(char=='='):
-                        currenttoken+=(char)
-                        currenttoken=''.join(currenttoken)
-                        mytoken = token(currenttoken,"special symbols")
-                        outputs.append(mytoken)
-                        currenttoken=""
-                        currentstate='start'
-                elif(currentstate=='Innum'):
-                    if(char.isdigit()): 
-                         currenttoken+=(char)
-                    else:
-                        currenttoken=''.join(currenttoken)
-                        mytoken = token(currenttoken,"NUM")
-                        outputs.append(mytoken)
-                        currenttoken=""
-                        currentstate='start'
-                        if(char in specialsymbols):
-                            currentstate='start'
-                            mytoken = token(char,"special symbols")
-                            outputs.append(mytoken)
-                elif(currentstate=='Inid'):
-                    if(char.isdigit() or char.isalpha()): 
-                         currenttoken+=(char)
-                    else:
-                        currenttoken=''.join(currenttoken)
-                        if(currenttoken in reservedwords):
-                            mytoken = token(currenttoken,"reserved words")
-                            outputs.append(mytoken)
-                        else:
-                            mytoken = token(currenttoken,"ID")
-                            outputs.append(mytoken)
-                        currenttoken=""
-                        currentstate='start'
-                        if(char==':'):
-                            currentstate='inassign'
-                            currenttoken +=char
-                        elif(char in specialsymbols):
-                            currentstate='start'
-                            mytoken = token(char,"special symbols")
-                            outputs.append(mytoken)
-                elif(char in specialsymbols):
-                        currentstate='start'
-                        mytoken = token(char,"special symbols")
-                        outputs.append(mytoken) 
-    return outputs
+    linesStr = " ".join(lines)
+    tokens = []
+    print(linesStr)
+    while iterator < len(linesStr):
+        token = getNextToken(linesStr)
+        print(token)
+        print(iterator)
+        if  token is None:
+            continue
+        tokens.append(token)
+    return tokens
 
 
+def getNextToken(codeStr):
+    global iterator
+    startIndex = iterator
+    firstChar = codeStr[startIndex]
+    if firstChar == ' ':
+        iterator = iterator + 1
+        return
+    # identifier 
+    # special symbol
+    # reserved Word 
+    # number
+    # comment
+
+    isId = isIdentifier(codeStr,startIndex)
+    if isId: 
+        endIndex = isId
+        identifier = codeStr[startIndex:endIndex]
+        #token =  token(identifier, 'ID')
+        iterator = iterator + endIndex
+        return token(identifier, 'ID')
+
+
+    isWord = isReservedWord(codeStr,startIndex)
+    if isWord: 
+        endIndex = isWord
+        identifier = codeStr[startIndex:endIndex]
+        #token =  token(identifier, 'reserved words')
+        iterator = iterator + endIndex
+        return token(identifier, 'reserved words')
+
+
+    isSymbol = isSpecialSymbol(codeStr, startIndex)
+    if isSymbol: 
+        endIndex = isSymbol
+        symbol = codeStr[startIndex:endIndex]
+        #token =  token(symbol, 'special symbols')
+        iterator = iterator + endIndex
+        return token(symbol, 'special symbols')
+
+    isN = isNumber(codeStr, startIndex)
+    if isN: 
+        endIndex = isN
+        number = codeStr[startIndex:endIndex]
+        #token =  token(number, 'NUM')
+        iterator = iterator + endIndex
+        return token(number, 'NUM')
+
+
+    isC = isComment(codeStr, startIndex)
+    if isC: 
+        endIndex = isC
+        iterator = iterator + endIndex
+
+    return
+
+def isIdentifier(codeStr,startIndex):
+    firstChar = codeStr[startIndex]
+
+    if not firstChar.isalpha(): 
+        return False
+    # or codeStr[startIndex].isDigit()
+    while codeStr[startIndex].isalpha() : 
+        startIndex = startIndex + 1
+    
+    return startIndex  
+    # return false 
+    # or the end index of the identifier
+    return False
+
+def isReservedWord(codeStr,startIndex):
+    endIndex = isIdentifier(codeStr,startIndex)
+    if not endIndex: 
+        return False
+    identifier = codeStr[startIndex:endIndex]
+    if identifier not in reservedWords: 
+        return False
+    
+    return endIndex
+
+    # return false 
+    # or the end index of the identifier
+    return False
+
+def isSpecialSymbol(codeStr,startIndex):
+    firstChar = codeStr[startIndex]
+    secondChar = codeStr[startIndex + 1]
+    # : 
+    # = 
+    if firstChar + secondChar in specialSymbols: 
+        return startIndex + 2
+    if firstChar not in specialSymbols: 
+        return False
+    
+    return startIndex + 1
+
+def isNumber(codeStr,startIndex):
+    firstChar = codeStr[startIndex]
+
+    if not firstChar.isdigit() or firstChar != '-':
+        return False
+    
+    while codeStr[startIndex].isdigit() or codeStr[startIndex] == '.' : 
+        startIndex = startIndex + 1
+        # 4434.3332 
+
+    # return false 
+    # or the end index of the identifier
+    return startIndex
+
+def isComment(codeStr,startIndex):
+    firstChar = codeStr[startIndex]
+    if firstChar != '{':
+        return False
+    
+    while codeStr[startIndex] != '}':
+        startIndex = 1 + startIndex
+    return startIndex + 1

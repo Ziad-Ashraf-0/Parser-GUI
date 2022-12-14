@@ -1,5 +1,5 @@
 from graphviz import Graph
-import scanner as src
+import scanner1 as src
 outputs= []
 iterator = 0
 Nodes = []
